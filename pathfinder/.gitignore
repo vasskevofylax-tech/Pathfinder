@@ -5,10 +5,21 @@ venv/
 
 # Python
 __pycache__/
-*.pyc
+*.py[cod]
+*.pyo
+
+# IDE
+.vscode/
+.idea/
 
 # Generated data
 data/
+*.db
+tracker*.db
+
+# Logs
+*.log
 
 # OS files
 .DS_Store
+Thumbs.db

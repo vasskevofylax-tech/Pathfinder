@@ -146,11 +146,36 @@ Domain lockout (any one = NO):
 
 ─── LOCATION RULE ───────────────────────────────────────────
 
-Score location OK if: fully remote, remote-first, or remote-friendly anywhere in Canada/globally.
-Score location OK if: hybrid or in-office in {hybrid_str}.
-Score location NO if: hybrid or in-office in any city outside {hybrid_str} with no remote option stated.
-If location is unstated or ambiguous, assume remote is possible (location OK).
-A location NO is a hard disqualifier.
+Score location OK if:
+- fully remote or remote-first.
+- hybrid or in-office within the candidate's preferred commuting area.
+- located in the Netherlands, with preference for the Randstad region.
+- the role offers exceptional career growth, compensation or learning opportunities that justify relocation within the Netherlands.
+
+Score location NO if:
+- the role requires regular on-site presence far outside the preferred commuting area without relocation support.
+
+If location is unstated or ambiguous, assume location is acceptable unless evidence suggests otherwise.
+
+─── LANGUAGE RULE ───────────────────────────────────────────
+
+The candidate works in English-speaking environments.
+
+Score language OK if:
+- the job posting is written in English.
+- English is the required or primary working language.
+- Dutch is listed only as a preference or a bonus.
+- the required language is not explicitly stated.
+
+Score language NO if:
+- the job posting is primarily written in Dutch.
+- fluent Dutch is required.
+- Dutch is mandatory for performing the role.
+- the posting explicitly states that Dutch-speaking candidates are required.
+
+A language NO is a hard disqualifier.
+
+If the job description is predominantly written in Dutch, assume Dutch is required unless the posting explicitly states that English is the working language.
 
 ─── EVIDENCE REQUIREMENTS ───────────────────────────────────
 

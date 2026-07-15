@@ -104,6 +104,18 @@ def scout_jobs(
     # Title keyword filters from config (fast pre-filter before AI)
     title_keywords = [kw.lower() for kw in search_config.get("title_keywords", [])]
     title_exclude = [kw.lower() for kw in search_config.get("title_exclude", [])]
+    language_exclude = [
+        kw.lower() for kw in search_config.get("language_exclude", [])
+    ]
+
+    language_allow = [
+        kw.lower() for kw in search_config.get("language_allow", [])
+    ]
+
+    allowed_countries = [
+            c.lower() for c in search_config.get("allowed_countries", [])
+        ]
+
 
     seen_ids = load_seen_job_ids()
     new_jobs = []
@@ -112,45 +124,106 @@ def scout_jobs(
     already_seen_count = 0
 
     for country, location in locations:
-      for query in queries:
-        logger.info(f"Scouting: '{query}' in {location or country}")
-        try:
-            jobs = search_jobs(
-                query=query,
-                location=location or country.title(),
-                sources=sources,
-                max_results=max_per_query,
-                country=country,
-                hours_old=hours_old,
-            )
-            raw_count += len(jobs)
+        for query in queries:
+            logger.info(f"Scouting: '{query}' in {location or country}")
+            try:
+                jobs = search_jobs(
+                    query=query,
+                    location=location or country.title(),
+                    sources=sources,
+                    max_results=max_per_query,
+                    country=country,
+                    hours_old=hours_old,
+                )
+                raw_count += len(jobs)
 
-            for job in jobs:
-                if job.id in seen_ids:
-                    already_seen_count += 1
-                    continue
-
-                title_lower = job.title.lower()
-
-                # Fast exclude-only pre-filter (runs before AI to drop obvious mismatches)
-                # title_keywords intentionally not used here — it's too strict for Indeed/Glassdoor
-                # which return valid roles without "salesforce" in the title. Let AI filter handle relevance.
-                if title_exclude and any(kw in title_lower for kw in title_exclude):
-                    logger.info(f"Skipping '{job.title}' ({job.source}) — title excluded")
-                    seen_ids.add(job.id)
-                    excluded_count += 1
-                    continue
-
-                # Optional: filter remote-only
-                if remote_only:
-                    loc_lower = job.location.lower()
-                    if not any(kw in loc_lower or kw in title_lower for kw in ["remote", "hybrid", "anywhere"]):
+                for job in jobs:
+                    if job.id in seen_ids:
+                        already_seen_count += 1
                         continue
 
-                new_jobs.append(job)
+                    title_lower = job.title.lower()
 
-        except Exception as e:
-            logger.error(f"Scout error for '{query}': {e}")
+                    # Fast exclude-only pre-filter (runs before AI to drop obvious mismatches)
+                    # title_keywords intentionally not used here — it's too strict for Indeed/Glassdoor
+                    # which return valid roles without "salesforce" in the title. Let AI filter handle relevance.
+                    if title_exclude and any(kw in title_lower for kw in title_exclude):
+                        logger.info(f"Skipping '{job.title}' ({job.source}) — title excluded")
+                        seen_ids.add(job.id)
+                        excluded_count += 1
+                        continue
+
+                    # Language pre-filter
+                    text = " ".join([
+                        job.title or "",
+                        job.description or "",
+                        job.company or "",
+                    ]).lower()
+                    
+
+                    dutch_markers = [
+                        " de ",
+                        " het ",
+                        " een ",
+                        " van ",
+                        " voor ",
+                        " met ",
+                        " jij ",
+                        " jouw ",
+                        " wij ",
+                        " onze ",
+                        " werkzaamheden ",
+                        " functie ",
+                        " verantwoordelijk ",
+                        " ervaring ",
+                        " sollicitatie ",
+                        " vacature ",
+                        " ben ",
+                        " bent ",
+                        " je ",
+                        " als ",
+                        " zoeken ",
+                        " zoeken we",
+                        " jouw uitdaging ",
+                        " dit ga je doen",
+                    ]
+
+                    dutch_hits = sum(
+                        1 for marker in dutch_markers
+                        if marker in text
+                        
+                    )
+
+                    if dutch_hits >= 3:
+                        logger.info(
+                            f"Skipping '{job.title}' ({job.source}) — detected Dutch language"
+                        )
+                        seen_ids.add(job.id)
+                        excluded_count += 1
+                        continue
+
+                    # Country filter
+                    location_text = (job.location or "").lower()
+
+                    if allowed_countries:
+                        if not any(country in location_text for country in allowed_countries):
+                            logger.info(
+                                f"Skipping '{job.title}' ({job.source}) — outside allowed countries"
+                            )
+                            seen_ids.add(job.id)
+                            excluded_count += 1
+                            continue
+
+                    # Optional: filter remote-only
+                    if remote_only:
+                        loc_lower = job.location.lower()
+                        if not any(kw in loc_lower or kw in title_lower for kw in ["remote", "hybrid", "anywhere"]):
+                            continue
+
+                    new_jobs.append(job)
+
+            except Exception as e:
+                logger.error(f"Scout error for '{query}': {e}")
 
     # Deduplicate by URL (same job can appear across multiple queries/sources)
     seen_urls: set[str] = set()
