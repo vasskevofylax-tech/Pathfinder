@@ -1,7 +1,10 @@
 name: Pathfinder — Daily Digest
-
 on:
-  # Add your own schedule here. Example: cron: "7 14 * * *" (6am PST daily)
+  # Runs automatically every day at 08:00 Netherlands time (06:00 UTC)
+  schedule:
+    - cron: "30 6 * * *"
+
+  # Allows you to manually run the workflow from GitHub
   workflow_dispatch:
     inputs:
       mode:
