@@ -5,7 +5,7 @@ import sqlite3
 from contextlib import contextmanager
 from datetime import datetime
 
-DB_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "tracker_test.db")
+DB_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "tracker.db")
 
 _CAREER_CACHE_TTL_DAYS = 7
 _REPOST_CAP_PER_COMPANY = 10
