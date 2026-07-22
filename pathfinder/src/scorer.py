@@ -5,7 +5,7 @@ import os
 
 import yaml
 
-from .llm_client import get_llm_response
+from .llm_client import get_llm_response, parse_json_response
 from .models import JobListing, ScoringResult
 from .tracker import get_company_posting_context
 
@@ -282,7 +282,8 @@ def score_job(job: JobListing, company_context: str = "") -> tuple[str, str, str
     except (_requests.RequestException, GroqRateLimitError) as e:
         return "MAYBE", f"Could not score - review manually ({e})", "", "", "", ""
 
-    result = ScoringResult.model_validate_json(raw)
+    parsed = parse_json_response(raw)
+    result = ScoringResult.model_validate(parsed)
 
     if result.disqualifier and result.disqualifier.upper() != "NONE":
         reason = f"{result.reasoning} Disqualifier: {result.disqualifier}."
