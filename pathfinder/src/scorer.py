@@ -273,7 +273,7 @@ def score_job(job: JobListing, company_context: str = "") -> tuple[str, str, str
         company=job.company,
         location=job.location,
         salary=job.salary or "not specified",
-        description=(job.description or "")[:3000],
+        description=(job.description or "")[:8000],
         company_context=company_context,
     )
 
